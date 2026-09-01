@@ -1,18 +1,27 @@
 <template>
-  <div
-    class="app-container"
-    @touchstart="handleTouchStart"
-    @touchend="handleTouchEnd"
-  >
+  <div class="app-container">
     <Header
       :score="score"
       :bestScore="bestScore"
       @reset="handleReset"
     />
 
-    <div style="position: relative; width: 100%; margin: 0 auto">
-      <Board :grid="grid" />
-      <GameOverlay :is-game-over="gameOver" @retry="handleReset" />
+    <div
+      v-if="currentTab === 'game'"
+      class="game-screen"
+      @touchstart="handleTouchStart"
+      @touchmove.prevent="handleTouchMove"
+      @touchend="handleTouchEnd"
+      @touchcancel="handleTouchCancel"
+    >
+      <div class="game-board">
+        <Board :grid="grid" />
+        <GameOverlay :is-game-over="gameOver" @retry="handleReset" />
+      </div>
+
+      <p class="game-instructions">
+        <strong>矢印キー</strong> or <strong>スワイプ</strong> でスライムを合成！
+      </p>
     </div>
 
     <!-- Navigation tabs -->
@@ -38,12 +47,10 @@
     </div>
 
     <!-- Tab content -->
-    <CollectionBook v-if="currentTab === 'collection'" :unlocked="unlockedValues" />
-    <StoryDiary v-if="currentTab === 'story'" :unlocked="unlockedValues" />
-
-    <p v-if="currentTab === 'game'" style="text-align: center; margin-top: 14px; color: #8888aa; font-size: 12px;">
-      <strong>矢印キー</strong> or <strong>スワイプ</strong> でスライムを合成！
-    </p>
+    <div v-if="currentTab !== 'game'" class="tab-content">
+      <CollectionBook v-if="currentTab === 'collection'" :unlocked="unlockedValues" />
+      <StoryDiary v-if="currentTab === 'story'" :unlocked="unlockedValues" />
+    </div>
 
     <!-- Unlock notification -->
     <UnlockNotification
@@ -118,6 +125,10 @@ const handleTouchStart = (e: TouchEvent) => {
   touchStart.value = { x: e.touches[0].clientX, y: e.touches[0].clientY }
 }
 
+const handleTouchMove = () => {
+  // The template's .prevent modifier blocks browser scrolling during a game swipe.
+}
+
 const handleTouchEnd = (e: TouchEvent) => {
   if (!touchStart.value || gameOver.value) return
 
@@ -137,6 +148,10 @@ const handleTouchEnd = (e: TouchEvent) => {
       move(diffY > 0 ? 'DOWN' : 'UP')
     }
   }
+  touchStart.value = null
+}
+
+const handleTouchCancel = () => {
   touchStart.value = null
 }
 
